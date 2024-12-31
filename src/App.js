@@ -31,32 +31,34 @@ const loadImage = (src) =>
     img.src = src;
   });
 
+
   const captureFullPageScreenshot = async () => {
     try {
       // Get the active tab
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
+  
       // Inject a script to get page dimensions
       const [{ result: pageDimensions }] = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: getPageDimensions,
       });
-
+  
       if (!pageDimensions) {
         console.error('Failed to retrieve page dimensions.');
         return;
       }
-
+  
       const { width, height, viewportHeight, devicePixelRatio } = pageDimensions;
-
+  
       // Create a canvas to combine screenshots
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
       canvas.width = width * devicePixelRatio;
       canvas.height = height * devicePixelRatio;
-
+  
       let currentY = 0;
-
+      const scrollDelay = 500; // Increased delay between scrolls to ensure page rendering
+  
       while (currentY < height) {
         // Scroll the page to the current position
         await chrome.scripting.executeScript({
@@ -64,17 +66,17 @@ const loadImage = (src) =>
           func: (y) => window.scrollTo(0, y),
           args: [currentY],
         });
-
-        // Wait for the scroll to complete
-        await new Promise((resolve) => setTimeout(resolve, 200));
-
+  
+        // Wait for the page to render
+        await new Promise((resolve) => setTimeout(resolve, scrollDelay));
+  
         // Capture the visible portion
         const image = await new Promise((resolve) =>
           chrome.tabs.captureVisibleTab(null, { format: 'png' }, resolve)
         );
-
+  
         const img = await loadImage(image);
-
+  
         // Draw the captured screenshot onto the canvas
         context.drawImage(
           img,
@@ -87,10 +89,10 @@ const loadImage = (src) =>
           canvas.width,
           viewportHeight * devicePixelRatio
         );
-
+  
         currentY += viewportHeight;
       }
-
+  
       // Generate a full-page screenshot from the canvas
       const fullScreenshot = canvas.toDataURL('image/png');
       setScreenshot(fullScreenshot);
