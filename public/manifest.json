@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Screenshot Tool",
+  "version": "1.0",
+  "description": "Take screenshots of your current webpage",
+  "permissions": ["activeTab", "scripting","tabs"],
+  "host_permissions": [
+  "<all_urls>"
+],
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Screenshot Tool"
+  }
+}
