@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ScreenshotButton from "./ScreenshotButton";
 import FullPageScreenshotButton from "./FullPageScreenshotButton";
+import RecordingButton from "./RecordingButton";
 
 const App = () => {
   const [screenshot, setScreenshot] = useState(null);
   const [progress, setProgress] = useState(0); // Track the progress
   const [isCapturing, setIsCapturing] = useState(false);
-  const [activeTab, setActiveTab] = useState('capture'); // State to control active tab
+  const [activeTab, setActiveTab] = useState('capture');
   const captureScreenshot = () => {
     chrome.tabs.captureVisibleTab(null, { format: "png" }, (image) => {
       setScreenshot(image);
@@ -165,10 +166,6 @@ const App = () => {
         );
 
         currentY += viewportHeight;
-
-        // Calculate the progress percentage
-        const progressPercentage = (currentY / height) * 100;
-        setProgress(progressPercentage); // Update the progress bar
       }
 
       // Generate a full-page screenshot from the canvas
@@ -206,11 +203,9 @@ const App = () => {
       });
 
       setIsCapturing(false); // Hide progress bar once screenshot is completed
-      setProgress(0); // Reset progress in case of error
     } catch (error) {
       console.error("Error capturing full-page screenshot:", error);
       setIsCapturing(false); // Hide progress bar in case of error
-      setProgress(0); // Reset progress in case of error
     }
   };
 
@@ -221,74 +216,87 @@ const App = () => {
     link.click();
   };
 
+  // Define the function to handle the start recording logic
   const startRecording = () => {
     chrome.runtime.sendMessage({ name: 'startRecording' });
   };
-  
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('startRecordingButton').addEventListener('click', startRecording);
-  });
-  
+
+  useEffect(() => {
+    // Add the click event listener when the component mounts
+    const startButton = document.getElementById('startRecordingButton');
+    if (startButton) {
+      startButton.addEventListener('click', startRecording);
+    }
+
+    // Cleanup function to remove the event listener when the component unmounts
+    return () => {
+      if (startButton) {
+        startButton.removeEventListener('click', startRecording);
+      }
+    };
+  }, []);
 
   return (
-    <div style={{ padding: "20px", width: "300px" }}>
+    <div style={{ width: '300px' }}>
       <h2>Screenshot Tool</h2>
-      <ScreenshotButton onCapture={captureScreenshot} />
-      <FullPageScreenshotButton onCapture={captureFullPageScreenshot} />
-      <button
-        id="startRecordingButton"
-        style={{ width: "100%", padding: "8px", marginTop: "10px" }}
-      >
-        Start Recording
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <button
+          onClick={() => setActiveTab('capture')}
+          style={{
+            flex: 1,
+            padding: '10px',
+            backgroundColor: activeTab === 'capture' ? '#4caf50' : '#f3f3f3',
+            color: activeTab === 'capture' ? '#fff' : '#000',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          Capture
+        </button>
+        <button
+          onClick={() => setActiveTab('recording')}
+          style={{
+            flex: 1,
+            padding: '10px',
+            backgroundColor: activeTab === 'recording' ? '#4caf50' : '#f3f3f3',
+            color: activeTab === 'recording' ? '#fff' : '#000',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          Recording
+        </button>
+      </div>
 
-      {screenshot && (
+      {/* Capture Tab */}
+      {activeTab === 'capture' && (
         <div>
-          <img
-            src={screenshot}
-            alt="Screenshot Preview"
-            style={{ width: "100%", margin: "10px 0" }}
-          />
-          <button
-            onClick={downloadScreenshot}
-            style={{ width: "100%", padding: "8px" }}
-          >
-            Download Screenshot
-          </button>
+          <ScreenshotButton onCapture={captureScreenshot} />
+          <FullPageScreenshotButton onCapture={captureFullPageScreenshot} />
+        
+          {screenshot && (
+            <div>
+              <img
+                src={screenshot}
+                alt="Screenshot Preview"
+                style={{ width: '100%', margin: '10px 0' }}
+              />
+              <button
+                onClick={downloadScreenshot}
+                style={{ width: '100%', padding: '8px' }}
+              >
+                Download Screenshot
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {isCapturing && (
-        <div
-          style={{
-            width: "100%",
-            height: "20px",
-            backgroundColor: "#f3f3f3",
-            borderRadius: "10px",
-            marginTop: "20px",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              width: `${progress}%`,
-              backgroundColor: "#4caf50",
-              borderRadius: "10px",
-              transition: "width 0.3s ease-in-out",
-            }}
-          />
-          <span
-            style={{
-              position: "absolute",
-              left: "50%",
-              transform: "translateX(-50%)",
-              color: "#fff",
-              fontWeight: "bold",
-              fontSize: "14px",
-            }}
-          >
-            {Math.round(progress)}%
-          </span>
+      {/* Recording Tab */}
+      {activeTab === 'recording' && (
+        <div>
+          <RecordingButton onStartRecording={startRecording} />
+         
         </div>
       )}
     </div>
