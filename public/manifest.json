@@ -3,10 +3,13 @@
   "name": "Screenshot Extesnsion",
   "version": "1.0",
   "description": "Take screenshots of your current webpage",
-  "permissions": ["activeTab", "scripting","tabs"],
+  "permissions": ["activeTab", "scripting","tabs", "desktopCapture"],
   "host_permissions": [
   "<all_urls>"
 ],
+"background": {
+  "service_worker": "background.js"
+},
   "action": {
     "default_popup": "index.html",
     "default_title": "Screenshot Extesnsion"
