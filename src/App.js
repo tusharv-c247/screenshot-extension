@@ -238,7 +238,7 @@ const App = () => {
 
   return (
     <div style={{ width: '300px' }}>
-      <h2>Screenshot Tool</h2>
+      <h2 style={{textAlign:"center"}}>Screenshot Tool</h2>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
         <button
           onClick={() => setActiveTab('capture')}
